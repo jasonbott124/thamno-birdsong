@@ -52,4 +52,4 @@ Scripts 6–8 import `xc_banks_map.py`, so its settings (`STRICT_SONG`, `FOCAL_R
 - Xeno-canto: https://xeno-canto.org (API v3)
 - Macaulay Library (Cornell): https://www.macaulaylibrary.org (metadata via GBIF; audio by research request)
 - FNJV, Unicamp: https://www2.ib.unicamp.br/fnjv/ (metadata via GBIF)
-- SWORD v16 (Altenau et al. 2021); GRWL (Allen & Pavelsky 2018); HydroSHEDS (Lehner et al. 2008)
+- SWORD v17c (Altenau et al. 2021); GRWL (Allen & Pavelsky 2018); HydroSHEDS (Lehner et al. 2008)

@@ -6,7 +6,7 @@ in the same spirit as the Accreted Ice radar maps: one overview, a set of
 regional close-ups, a GeoPackage for QGIS and summary tables.
 
 Layers
-  * SWORD v16 (South America): river reaches drawn from the 200 m nodes,
+  * SWORD v17c (South America): river reaches drawn from the 200 m nodes,
     coloured by channel width and, on a second map, by number of channels.
   * GRWL summary stats: river segments with mean width (QGIS export, optional map layer).
   * GRWL water mask (30 m tiles): drawn on the regional maps only.
@@ -46,7 +46,8 @@ ROOT = _HERE.parent if (_HERE.parent / "data" / "geodata").exists() \
     else Path.home() / "Desktop" / "Thamno-2026"
 GEO = ROOT / "data" / "geodata"
 
-SWORD_NC      = GEO / "SWORD_v16_netcdf" / "netcdf" / "sa_sword_v16.nc"
+SWORD_VERSION = "v17c"
+SWORD_NC      = GEO / "netcdf" / f"sa_sword_{SWORD_VERSION}.nc"
 GRWL_SUMMARY  = GEO / "GRWL_summaryStats" / "GRWL_summaryStats.shp"
 GRWL_MASK_DIR = GEO / "GRWL_mask_V01.01"
 DEM_TIF       = GEO / "sa_con_3s" / "sa_con_3s.tif"
@@ -499,16 +500,16 @@ def overview(gdf, dem_pack, countries, grwl, mode):
     if mode == "width":
         draw_rivers_by_class(ax, gdf)
         width_legend(ax)
-        title = "Amazon rivers by channel width (SWORD v16)"
+        title = f"Amazon rivers by channel width (SWORD {SWORD_VERSION})"
     else:
         draw_rivers_by_channels(ax, gdf)
         channel_legend(ax)
-        title = "Amazon rivers by number of channels (SWORD v16)"
+        title = f"Amazon rivers by number of channels (SWORD {SWORD_VERSION})"
     label_rivers(ax, gdf, rb, LABEL_TOP_N_RIVERS)
     draw_region_boxes(ax)
     setup_axes(ax, rb)
     ax.set_title(title, fontsize=11, loc="left")
-    ax.text(0.0, -0.06, "Rivers: SWORD v16 (Altenau et al. 2021). Relief: HydroSHEDS 3\" "
+    ax.text(0.0, -0.06, f"Rivers: SWORD {SWORD_VERSION} (Altenau et al. 2021). Relief: HydroSHEDS 3\" "
             "conditioned DEM. Dashed boxes: regional maps.", transform=ax.transAxes,
             fontsize=6.5, color="#555")
     add_inset(fig, ax, countries)
