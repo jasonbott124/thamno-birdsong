@@ -1,0 +1,19 @@
+name: antbird
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.10
+  - numpy
+  - pandas
+  - scipy
+  - matplotlib
+  - geopandas>=1.0
+  - shapely>=2.0
+  - pyogrio
+  - rasterio
+  - netcdf4
+  - requests
+  - librosa
+  - soundfile
+  - ffmpeg
+  - scikit-learn
