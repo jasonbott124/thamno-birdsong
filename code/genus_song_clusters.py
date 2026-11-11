@@ -13,7 +13,7 @@ Per-recording song features (medians over the song bouts found in the file):
   inter-note interval variability, peak frequency, 10th/90th percentile
   frequency, bandwidth, frequency slope, bouts per minute, + 13 MFCC means.
 
-Outputs: output/genus_clusters/<GENUS>/
+Outputs: output/genus_clusters/<GENUS>/  (GENUS can be one genus, a list, or "ALL")
   features.csv         one row per recording (+ species, lat, lon, site)
   clusters.csv         cluster labels for every k tried
   summary.png          silhouette by k | PCA by species | PCA by cluster |
@@ -37,7 +37,8 @@ import requests
 # =============================================================================
 # SETTINGS
 # =============================================================================
-GENUS = "Thamnophilus"       # try "Hypocnemis" next (river-split cantator complex)
+GENUS = "ALL"                # one genus, a list (["Hypocnemis", "Myrmoborus"]) or "ALL"
+SKIP_DONE = True             # in a list/ALL run, skip genera that already have features.csv
 MIN_PER_SPECIES = 20         # species with fewer usable songs are left out
 MAX_PER_SPECIES = 40         # cap per species so common species don't dominate
 MAX_SECONDS = 60             # analyse at most this much of each file
@@ -48,8 +49,7 @@ PAUSE_S = 0.5                # between downloads
 
 import xc_banks_map as xb    # paths, usable-song rules, base map
 ROOT = xb.ROOT
-OUT = ROOT / "output" / "genus_clusters" / GENUS
-AUDIO = ROOT / "data" / "audio" / GENUS
+OUT = AUDIO = None           # set per genus by set_genus()
 
 # =============================================================================
 
@@ -66,6 +66,29 @@ def api_key():
                 if line.strip().startswith("XENO_CANTO_API_KEY"):
                     k = line.split("=", 1)[1].strip().strip('"').strip("'")
     return k
+
+
+def set_genus(g):
+    """Point the module at one genus (GENUS, OUT, AUDIO are used by the functions below)."""
+    global GENUS, OUT, AUDIO
+    GENUS = g
+    OUT = ROOT / "output" / "genus_clusters" / g
+    AUDIO = ROOT / "data" / "audio" / g
+
+
+def genera_to_run(setting):
+    """'ALL' = every genus with at least one species meeting MIN_PER_SPECIES usable songs."""
+    if isinstance(setting, str) and setting.upper() != "ALL":
+        return [setting]
+    if isinstance(setting, (list, tuple)):
+        return list(setting)
+    x = pd.read_csv(xb.XC_CSV, low_memory=False)
+    x = x[x.lat.notna()]
+    x = x[xb.usable_mask(x).values]
+    n = (x.gen + " " + x.sp).value_counts()
+    ok = n[n >= MIN_PER_SPECIES].index.str.split().str[0]
+    order = x[x.gen.isin(ok)].gen.value_counts().index           # most songs first
+    return list(order)
 
 
 def pick_recordings():
@@ -284,6 +307,9 @@ def figures(feat, P, labels, scores, n_sp):
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     rec = pick_recordings()
+    if rec.empty:
+        log(f"{GENUS}: no species with >= {MIN_PER_SPECIES} usable songs; skipped.")
+        return
     rec["path"] = download(rec)
     rows = []
     for i, r in rec.iterrows():
@@ -301,6 +327,9 @@ def main():
     feat = feat[feat.species.map(feat.species.value_counts()) >= 5]       # need a few per species
     feat.to_csv(OUT / "features.csv", index=False)
     log(f"Features for {len(feat)} recordings of {feat.species.nunique()} species")
+    if feat.species.nunique() < 2 or len(feat) < 10:
+        log("Fewer than 2 species: features saved, clustering skipped.")
+        return
 
     P, pca, labels, scores, n_sp = cluster(feat)
     scores.round(3).to_csv(OUT / "scores.csv", index=False)
@@ -314,4 +343,20 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    todo = genera_to_run(GENUS)
+    batch = len(todo) > 1
+    if batch:
+        log(f"{len(todo)} genera to run: {', '.join(todo)}")
+    for n, g in enumerate(todo, 1):
+        set_genus(g)
+        if batch and SKIP_DONE and (OUT / "features.csv").exists():
+            log(f"[{n}/{len(todo)}] {g}: features.csv exists, skipped (SKIP_DONE)")
+            continue
+        if batch:
+            log(f"[{n}/{len(todo)}] {g}")
+        try:
+            main()
+        except Exception as e:                    # one bad genus shouldn't stop an overnight run
+            if not batch:
+                raise
+            log(f"  {g} failed: {e}")
