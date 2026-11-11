@@ -36,6 +36,7 @@ You need a Xeno-canto API key. Set `XENO_CANTO_API_KEY` in your environment, or 
 | 7 | `plot_archives_map.py` | One map of every recording, by archive | `output/combined_banks/recordings_by_archive_map.png` |
 | 8 | `genus_song_clusters.py` | Downloads songs for one genus (or a list, or `"ALL"`), measures them, runs k-means with no labels, and scores the clusters against species (silhouette, ARI, NMI) | `output/genus_clusters/<GENUS>/` |
 | 9 | `song_vs_geo_distance.py` | Euclidean song distance (z-scored features) vs great-circle distance with a Mantel test, per species, per genus and/or all songs pooled (`LEVELS`) | `output/song_vs_geo/` |
+| 10 | `feature_quality.py` | Scores each song feature for noise: missing, zero, outliers, species signal, same-site repeatability, correlation with recording conditions; plus a redundancy matrix | `output/feature_quality/` |
 
 Scripts 6–8 import `xc_banks_map.py`, so its settings (`STRICT_SONG`, `FOCAL_RIVERS`, thresholds) carry through to them.
 
