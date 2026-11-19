@@ -65,11 +65,13 @@ METHOD = "spearman"           # Mantel correlation: "spearman" (rank) or "pearso
 N_PERM = 999
 SEED = 0
 N_BINS = 8                    # distance bins for the binned means
+OUT_SUFFIX = ""               # appended to the output folder name, e.g. "_main_features"
+                              # -> output/song_vs_geo_main_features/ (keeps earlier runs intact)
 
 _HERE = Path(__file__).resolve().parent
 ROOT = _HERE.parent if (_HERE.parent / "data").exists() else Path.home() / "Desktop" / "Thamno-2026"
 FEAT_DIR = ROOT / "output" / "genus_clusters"
-OUT_DIR = ROOT / "output" / "song_vs_geo"
+OUT_DIR = ROOT / "output" / f"song_vs_geo{OUT_SUFFIX}"
 
 # =============================================================================
 
@@ -245,7 +247,11 @@ def analyse(df, group_col, cols, out, title):
 def main():
     df = load_features()
     cols = FEATURES + ([c for c in df.columns if c.startswith("mfcc")] if INCLUDE_MFCC else [])
-    cols = [c for c in cols if c in df.columns]
+    missing = [c for c in cols if c not in df.columns]
+    if missing:
+        print(f"  WARNING: features not in features.csv, skipped: {', '.join(missing)}")
+    cols = [c for c in dict.fromkeys(cols) if c in df.columns]
+    print(f"Features used: {', '.join(cols)}")
     df["all"] = "All antbirds"
     print(f"{df.genus.nunique()} genera, {df.species.nunique()} species, {len(df)} recordings; "
           f"{len(cols)} features ({'with' if INCLUDE_MFCC else 'without'} MFCCs); unit = {UNIT}; "
